@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "agent_runtime telemetry record (closed, phase-specific)",
+  "description": "Every persisted JSONL record must match exactly one closed per-phase schema. Closed property sets (additionalProperties:false) reject raw content fields (payload/args/result/final/thought/error/body/content/url/path/to) anywhere — only structural *_summary objects are allowed. Identifier fields that fail validation are written as '<invalid-id>' plus an optional '<field>_summary'.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/run"},
+    {"$ref": "#/$defs/operational_bulletin"},
+    {"$ref": "#/$defs/action_broker"},
+    {"$ref": "#/$defs/task"}
+  ],
+  "$defs": {
+    "text_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chars", "sha256_12", "redacted"],
+      "properties": {
+        "chars": {"type": "integer"},
+        "sha256_12": {"type": "string"},
+        "redacted": {"const": true}
+      }
+    },
+    "args_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["known_keys", "unknown_key_count", "key_hashes", "chars", "sha256_12", "redacted"],
+      "properties": {
+        "known_keys": {"type": "array", "items": {"type": "string"}},
+        "unknown_key_count": {"type": "integer"},
+        "key_hashes": {"type": "array", "items": {"type": "string"}},
+        "chars": {"type": "integer"},
+        "sha256_12": {"type": "string"},
+        "redacted": {"const": true}
+      }
+    },
+    "list_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["len", "sha256_12", "redacted"],
+      "properties": {
+        "len": {"type": "integer"},
+        "sha256_12": {"type": "string"},
+        "redacted": {"const": true}
+      }
+    },
+    "any_summary": {
+      "oneOf": [
+        {"$ref": "#/$defs/text_summary"},
+        {"$ref": "#/$defs/args_summary"},
+        {"$ref": "#/$defs/list_summary"}
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "phase", "tenant", "workflow", "step_no", "tool", "outcome"],
+      "properties": {
+        "ts": {"type": "string"},
+        "phase": {"const": "run"},
+        "tenant": {"type": "string"},
+        "workflow": {"type": "string"},
+        "step_no": {"type": "integer"},
+        "tool": {"type": ["string", "null"]},
+        "outcome": {"enum": ["start", "end"]},
+        "model": {"type": "string"},
+        "model_summary": {"$ref": "#/$defs/text_summary"},
+        "completed": {"type": "boolean"},
+        "run_outcome": {"type": "string"},
+        "blocked_actions": {"type": "integer"},
+        "allowed_actions": {"type": "integer"},
+        "block_reasons": {"type": "array", "items": {"type": "string"}},
+        "error_summary": {"$ref": "#/$defs/text_summary"}
+      }
+    },
+    "operational_bulletin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "phase", "tenant", "workflow", "step_no", "tool", "outcome"],
+      "properties": {
+        "ts": {"type": "string"},
+        "phase": {"const": "operational_bulletin"},
+        "tenant": {"type": "string"},
+        "workflow": {"type": "string"},
+        "step_no": {"type": "integer"},
+        "tool": {"type": ["string", "null"]},
+        "outcome": {"type": "string"},
+        "bulletin_id": {"type": "string"},
+        "bulletin_id_summary": {"$ref": "#/$defs/text_summary"},
+        "posture_profile": {"type": "string"},
+        "risk_level": {"type": "string"}
+      }
+    },
+    "action_broker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "phase", "tenant", "workflow", "step_no", "tool", "outcome"],
+      "properties": {
+        "ts": {"type": "string"},
+        "phase": {"const": "action_broker"},
+        "tenant": {"type": "string"},
+        "workflow": {"type": "string"},
+        "step_no": {"type": "integer"},
+        "tool": {"type": ["string", "null"]},
+        "outcome": {"enum": ["allowed", "blocked"]},
+        "record": {"type": "string"},
+        "effect_category": {"type": "string"},
+        "taint": {"type": "string"},
+        "reason": {"type": "string"},
+        "posture_profile": {"type": "string"},
+        "risk_level": {"type": "string"},
+        "bulletin_id": {"type": "string"},
+        "bulletin_id_summary": {"$ref": "#/$defs/text_summary"}
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ts", "phase", "tenant", "workflow", "step_no", "tool", "outcome"],
+      "properties": {
+        "ts": {"type": "string"},
+        "phase": {"const": "task"},
+        "tenant": {"type": "string"},
+        "workflow": {"type": "string"},
+        "step_no": {"type": "integer"},
+        "tool": {"type": ["string", "null"]},
+        "outcome": {"type": "string"},
+        "redacted": {"const": true},
+        "thought_summary": {"anyOf": [{"$ref": "#/$defs/text_summary"}, {"type": "null"}]},
+        "args_summary": {"anyOf": [{"$ref": "#/$defs/any_summary"}, {"type": "null"}]},
+        "result_summary": {"anyOf": [{"$ref": "#/$defs/text_summary"}, {"type": "null"}]},
+        "final_summary": {"anyOf": [{"$ref": "#/$defs/text_summary"}, {"type": "null"}]}
+      }
+    }
+  }
+}

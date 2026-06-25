@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-runtime"
+version = "2.0.0"
+description = "Containment defense layer for a multi-tenant agent runtime (output scanner, scoped store, credential broker, enforcing tool registries)"
+requires-python = ">=3.11"
+# The shipped defense layer (control/ + safety/ + provider) imports only the Python standard library:
+# it runs over the host's stock target runtime, which the host provides. No third-party runtime deps.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pyyaml>=6.0",          # optional local-pattern file for the credential/secret guard
+    "ruff>=0.5",            # lint / import-order gate
+]
+# Optional security tooling (SAST + dependency vulnerability audit). Kept out of requirements.lock so
+# the locked runtime/dev set stays minimal; install this extra explicitly when running those checks.
+security = [
+    "bandit>=1.7",          # SAST (make sast)
+    "pip-audit>=2.7",       # dependency vulnerability audit (make dep-audit)
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# Install-free test runs: put the package on the path directly.
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["runs", "workspaces", ".hypothesis", "vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests favor descriptive single-line asserts and compact setup over wrapping.
+"tests/*" = ["E501", "E741", "E702"]
+
+[tool.bandit]
+# Reviewed, accepted exceptions, each intentional in this instrumented runtime:
+#   B110  best-effort defensive try/except guards (broker classification, run-end persistence);
+#   B404/B603/B607  the credential scanner shells out to git / scanners with fixed internal arguments;
+#   B105  a sample-data string ("summary") false-positives the hardcoded-password heuristic.
+skips = ["B110", "B404", "B603", "B607", "B105"]

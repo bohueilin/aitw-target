@@ -1,0 +1,51 @@
+name: ci
+
+# Offline CI for the defense-layer artifact: gates, guards, lint, and the provider unit tests. The
+# stock target substrate is not present in CI, so the substrate-dependent acceptance cases skip there;
+# they run locally via `make test` / `make selftest` with the substrate on the path.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Label scan (no internal/condition labels in the tree)
+        run: python3 scripts/label_scan.py
+
+      - name: Install (editable, dev extras, lock-constrained)
+        run: python3 -m pip install -c requirements.lock -e ".[dev]"
+
+      - name: Install security tooling (SAST + dependency audit)
+        run: python3 -m pip install -e ".[security]"
+
+      - name: Lint (ruff)
+        run: ruff check src/ scripts/ tests/
+
+      - name: SAST (bandit)
+        run: bandit -q -r src/ -c pyproject.toml
+
+      - name: Dependency vulnerability audit (pip-audit against the lock)
+        run: pip-audit -r requirements.lock --progress-spinner off
+
+      - name: Credential/secret guard
+        run: python3 -m agent_runtime.safety.secret_guard
+
+      - name: Dependency-confusion guard (vendored packages resolve locally + hash pin)
+        run: python3 -m agent_runtime.safety.dependency_guard
+
+      - name: Tests (offline; substrate-dependent cases skip without the stock target on the path)
+        run: PYTHONPATH=src python3 -m pytest -q

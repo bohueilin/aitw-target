@@ -1,0 +1,9 @@
+{
+  "_comment": "SHA256 pins for vendored, local-only packages. dependency_guard.verify_vendored() verifies the live vendored source file matches these hashes; a mismatch (tampering or a substituted copy) fails the guard. Regenerate after any intentional change to a vendored file.",
+  "helpful_utils": {
+    "origin": "local-vendored-stub",
+    "files": {
+      "helpful_utils/__init__.py": "33e70fea239f443cca5c628ed875827567d8503b3a659d71aa5db7796cf5a7ed"
+    }
+  }
+}

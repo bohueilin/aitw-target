@@ -1,0 +1,27 @@
+# requirements.lock — exact-version pins for the DECLARED public-index dependencies.
+#
+# These are intentionally PUBLIC-INDEX (PyPI) packages: the model adapter, the web surface, the data
+# layer, and the test tooling. They are pinned to exact versions for reproducible installs. The
+# local-only dependency-confusion surface (the vendored `helpful_utils`) is NOT here and is
+# NOT a PyPI dependency — it is local-only (vendor/), forced authoritative on sys.path, and integrity-
+# verified by SHA256 in vendor/manifest.json (see scripts/sbom.py and safety/dependency_guard.py).
+#
+# Hash pinning: exact versions are pinned below. Full artifact hash verification is a deploy-time step
+# (resolves hashes against the index), not something baked into the repo:
+#   pip install --require-hashes -r requirements.lock.hashes
+# To generate the hashed file in your environment:
+#   pip install pip-tools && pip-compile --generate-hashes -o requirements.lock.hashes pyproject.toml
+#
+# Runtime (declared in pyproject [project.dependencies]):
+anthropic==0.111.0
+fastapi==0.138.0
+uvicorn==0.49.0
+pydantic==2.13.4
+PyYAML==6.0.3
+#
+# Dev tooling (declared in pyproject [project.optional-dependencies].dev):
+pytest==9.1.1
+httpx==0.28.1
+jsonschema==4.26.0
+hypothesis==6.155.7
+ruff==0.15.18

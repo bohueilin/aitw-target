@@ -1,0 +1,3 @@
+name: defense
+provider: provider:DEPLOYMENT
+declared_secrets: []

@@ -1,0 +1,16 @@
+# Dependency-confusion controls for vendored, local-only packages.
+#
+# Real third-party deps (anthropic, fastapi, uvicorn, pydantic, pyyaml) install normally from the
+# public index. Vendored, LOCAL-ONLY names (see vendor/) must NEVER resolve from a public index —
+# that is the dependency-confusion vector. They are intentionally NOT declared as project
+# dependencies in pyproject.toml, so a normal `pip install -e ".[dev]"` never fetches them.
+#
+# If a vendored name must be installed, install it LOCAL-ONLY:
+#     pip install --no-index --find-links vendor helpful_utils
+#
+# The runtime guard (agent_runtime.safety.dependency_guard) keeps the local copy authoritative and FAILS
+# LOUDLY if a non-local same-named package is ever what imports. Verify with:
+#     PYTHONPATH=src python -m agent_runtime.safety.dependency_guard
+#
+# Do NOT add a vendored, local-only name to a requirements/pyproject entry that an installer would
+# resolve against a public index. See vendor/helpful_utils/README.md.
